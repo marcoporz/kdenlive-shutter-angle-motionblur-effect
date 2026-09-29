@@ -63,7 +63,7 @@ fixed.)*
 
 ### Build & install (all distros)
 ```bash
-git clone https://github.com/<YOUR-USERNAME>/kdenlive-shutterblur.git
+git clone https://github.com/marcoporz/kdenlive-shutterblur.git
 cd kdenlive-shutterblur
 ./install.sh
 ```
