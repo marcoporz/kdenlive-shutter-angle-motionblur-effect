@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!DOCTYPE kpartgui>
+<effect tag="shutterblur" id="shutterblur">
+    <name>Transform + Motion Blur (180°)</name>
+    <description>Position, scale, rotation and opacity with physically-based motion blur (180° shutter, 16 samples).</description>
+    <author>mlt-shutterblur (filter by RocketJannis, MLT PR #1301)</author>
+    <parameter type="animatedrect" name="rect" default="0 0 %width %height 1">
+        <name>Rectangle</name>
+    </parameter>
+    <parameter type="animated" name="rotation" max="360" min="-360" default="0" decimals="2" notintimeline="1" suffix="°" compact="1">
+        <name>Rotation</name>
+    </parameter>
+</effect>

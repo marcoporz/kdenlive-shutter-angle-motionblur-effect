@@ -1,0 +1,43 @@
+/*
+ * Copyright (C) 2014-2026 Meltytech, LLC
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+#ifndef COMMON_H
+#define COMMON_H
+
+#include <framework/mlt.h>
+
+// The step size used for MLT mipmapping to ensure stable and high quality downscaling
+static constexpr double MLT_QT_MIPMAP_STEP = 0.85;
+
+class QImage;
+
+bool createQApplicationIfNeeded(mlt_service service);
+mlt_image_format choose_image_format(mlt_image_format format);
+void convert_qimage_to_mlt(QImage *qImg, uint8_t *mImg, int width, int height);
+void convert_mlt_to_qimage(
+    uint8_t *mImg, QImage *qImg, int width, int height, mlt_image_format format);
+int create_image(mlt_frame frame,
+                 uint8_t **image,
+                 mlt_image_format *image_format,
+                 int *width,
+                 int *height,
+                 int writable);
+void adjust_mlt_mipmap_size(double scaleTarget, int *b_width, int *b_height);
+void normalize_mlt_source_size(double b_ar, double consumer_ar, int *b_width, int b_height);
+
+#endif // COMMON_H
