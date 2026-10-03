@@ -1,11 +1,15 @@
 # kdenlive-shutterblur
 
 A **motion blur / shutter angle** effect for [Kdenlive](https://kdenlive.org),
-fixed at a physically-based **180° shutter** (the classic "film" look).
+with an adjustable, physically-based shutter angle (180° "film" look by
+default).
 
 Animate position, scale, rotation or opacity with keyframes (like the built-in
 Transform effect) and this effect leaves a natural motion trail behind fast
 movement — instead of the strobing/juddering you get with plain keyframes.
+The **Shutter Angle** slider goes from 0° (blur off) to 360° (maximum blur),
+so it doubles as an on/off switch: set it to 0 to disable the effect while
+keeping your transform keyframes intact.
 
 > ⚠️ **Status: early / unofficial.** This is a community packaging of an
 > **unmerged, draft** MLT pull request (see [CREDITS.md](CREDITS.md)). It
@@ -63,7 +67,7 @@ fixed.)*
 
 ### Build & install (all distros)
 ```bash
-git clone https://github.com/marcoporz/kdenlive-shutterblur.git
+git clone https://github.com/<YOUR-USERNAME>/kdenlive-shutterblur.git
 cd kdenlive-shutterblur
 ./install.sh
 ```
@@ -86,10 +90,20 @@ search path — open an issue with your distro and MLT version.
 
 1. Add a clip or image to the timeline.
 2. Open the Effects panel, search for **"Motion"** or **"Blur"**.
-3. Apply **"Transform + Motion Blur (180°)"**.
+3. Apply **"Transform + Motion Blur"**.
 4. Animate the **Rectangle** (position/size) and/or **Rotation** parameters
    with at least two keyframes, same as you would with the normal Transform
    effect.
+5. Adjust **Shutter Angle** (0–360°, default 180°) to taste, or set it to
+   **0** to switch the blur off entirely without removing the effect or
+   your keyframes.
+6. **Blur Quality** (samples, default 16) trades render speed for
+   smoothness — lower it on slow machines, raise it if you see banding in
+   the trail.
+7. **Rotation Pivot X/Y** (0–1, default 0.5/0.5 = center) moves the point
+   the rotation spins around — e.g. 0/0 pivots around the top-left corner
+   of the rectangle instead of its center. Only affects rotation, not
+   position or scale.
 
 ## Uninstall
 ```bash
@@ -101,7 +115,6 @@ rm ~/.local/share/kdenlive/effects/shutterblur.xml
 ## Known limitations
 
 - 8-bit color only.
-- No anchor-point / pivot control for rotation.
 - No blend-mode options (uses simple alpha compositing, like `qtblend`).
 - Not tested at very high resolutions or very long clips.
 - Motion is estimated from previous→current keyframe interpolation, so very

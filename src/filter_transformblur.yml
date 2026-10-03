@@ -50,6 +50,34 @@ parameters:
     widget: slider
     unit: degrees
 
+  - identifier: pivot_x
+    title: Rotation pivot X
+    type: float
+    description: >
+      Horizontal rotation pivot, normalized within the rectangle (0 = left
+      edge, 0.5 = center, 1 = right edge). Only affects rotation, not
+      position/scale.
+    minimum: 0
+    maximum: 1
+    default: 0.5
+    mutable: yes
+    animation: no
+    widget: slider
+
+  - identifier: pivot_y
+    title: Rotation pivot Y
+    type: float
+    description: >
+      Vertical rotation pivot, normalized within the rectangle (0 = top
+      edge, 0.5 = center, 1 = bottom edge). Only affects rotation, not
+      position/scale.
+    minimum: 0
+    maximum: 1
+    default: 0.5
+    mutable: yes
+    animation: no
+    widget: slider
+
   - identifier: samples
     title: Blur samples
     type: integer

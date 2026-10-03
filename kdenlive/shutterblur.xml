@@ -1,13 +1,29 @@
 <?xml version="1.0"?>
 <!DOCTYPE kpartgui>
 <effect tag="shutterblur" id="shutterblur">
-    <name>Transform + Motion Blur (180°)</name>
-    <description>Position, scale, rotation and opacity with physically-based motion blur (180° shutter, 16 samples).</description>
+    <name>Transform + Motion Blur</name>
+    <description>Position, scale, rotation and opacity with physically-based motion blur. Set Shutter Angle to 0 to disable the blur (acts as an on/off switch) while keeping the transform.</description>
     <author>mlt-shutterblur (filter by RocketJannis, MLT PR #1301)</author>
     <parameter type="animatedrect" name="rect" default="0 0 %width %height 1">
         <name>Rectangle</name>
     </parameter>
     <parameter type="animated" name="rotation" max="360" min="-360" default="0" decimals="2" notintimeline="1" suffix="°" compact="1">
         <name>Rotation</name>
+    </parameter>
+    <parameter type="constant" name="pivot_x" max="1" min="0" default="0.5" decimals="2" factor="1">
+        <name>Rotation Pivot X</name>
+        <comment>0 = left edge of the rectangle, 0.5 = center, 1 = right edge. Only affects rotation.</comment>
+    </parameter>
+    <parameter type="constant" name="pivot_y" max="1" min="0" default="0.5" decimals="2" factor="1">
+        <name>Rotation Pivot Y</name>
+        <comment>0 = top edge of the rectangle, 0.5 = center, 1 = bottom edge. Only affects rotation.</comment>
+    </parameter>
+    <parameter type="constant" name="shutter_angle" max="360" min="0" default="180" decimals="0" suffix="°" factor="1">
+        <name>Shutter Angle</name>
+        <comment>0 = motion blur off. 180 = standard film/video look. 360 = maximum blur (full frame-to-frame motion).</comment>
+    </parameter>
+    <parameter type="constant" name="samples" max="64" min="1" default="16" decimals="0" suffix=" samples" factor="1">
+        <name>Blur Quality</name>
+        <comment>Number of samples used to build the blur. Higher = smoother but slower to render.</comment>
     </parameter>
 </effect>

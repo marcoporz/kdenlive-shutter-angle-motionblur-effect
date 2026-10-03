@@ -44,19 +44,24 @@ TransformState operator*(const TransformState &a, double s)
     return {a.x * s, a.y * s, a.w * s, a.h * s, a.rotation * s};
 }
 
+// pivot is normalized (0..1, 0..1) within the rect: (0.5, 0.5) is the
+// center (previous/default behavior), (0, 0) the top-left corner, etc.
 QTransform build_transform(const TransformState &p,
                            int src_width,
                            int src_height,
-                           QPointF outputOffset = QPointF(0, 0))
+                           QPointF outputOffset = QPointF(0, 0),
+                           QPointF pivot = QPointF(0.5, 0.5))
 {
     QTransform t;
     if (!outputOffset.isNull())
         t.translate(-outputOffset.x(), -outputOffset.y());
     t.translate(p.x, p.y);
     if (p.rotation != 0.0) {
-        t.translate(p.w / 2.0, p.h / 2.0);
+        double pivotX = p.w * pivot.x();
+        double pivotY = p.h * pivot.y();
+        t.translate(pivotX, pivotY);
         t.rotate(p.rotation);
-        t.translate(-p.w / 2.0, -p.h / 2.0);
+        t.translate(-pivotX, -pivotY);
     }
     if (src_width > 0 && src_height > 0 && (p.w != src_width || p.h != src_height)) {
         t.scale(p.w / src_width, p.h / src_height);
@@ -87,13 +92,15 @@ QRectF compute_swept_rect(const TransformState &current,
                           double frac,
                           int samples,
                           int src_width,
-                          int src_height)
+                          int src_height,
+                          QPointF pivot)
 {
     QRectF sourceRect(0, 0, src_width, src_height);
     QRectF swept;
     for (int s = 0; s < samples; s++) {
         TransformState sampled = sample_params(current, delta, frac, samples, s);
-        QRectF mapped = build_transform(sampled, src_width, src_height).mapRect(sourceRect);
+        QRectF mapped = build_transform(sampled, src_width, src_height, QPointF(0, 0), pivot)
+                            .mapRect(sourceRect);
         swept = (s == 0) ? mapped : swept.united(mapped);
     }
     // Small margin for the bilinear/antialiasing footprint at the edges.
@@ -111,6 +118,7 @@ struct BlurSliceContext
     double frac; // shutter angle
     int samples;
     int src_width, src_height; // dimensions weightedSource was built from
+    QPointF pivot;             // normalized rotation pivot within the rect
 
     // Sub-canvas (the swept bounding box) within the full destination image.
     int subX0, subY0;
@@ -144,7 +152,8 @@ int sliced_blur_proc(int id, int index, int jobs, void *cookie)
     painter.setCompositionMode(QPainter::CompositionMode_Plus);
     for (int s = 0; s < ctx->samples; s++) {
         TransformState sampled = sample_params(ctx->current, ctx->delta, ctx->frac, ctx->samples, s);
-        painter.setTransform(build_transform(sampled, ctx->src_width, ctx->src_height, stripOffset));
+        painter.setTransform(
+            build_transform(sampled, ctx->src_width, ctx->src_height, stripOffset, ctx->pivot));
         painter.drawImage(0, 0, *ctx->weightedSource);
     }
     painter.end();
@@ -211,9 +220,10 @@ void render_motion_blur(const QImage &sourceImage,
                         double frac,
                         int samples,
                         int src_width,
-                        int src_height)
+                        int src_height,
+                        QPointF pivot)
 {
-    QRectF swept = compute_swept_rect(current, delta, frac, samples, src_width, src_height);
+    QRectF swept = compute_swept_rect(current, delta, frac, samples, src_width, src_height, pivot);
     QRect clipped = swept.intersected(QRectF(0, 0, dest_width, dest_height)).toAlignedRect();
     if (clipped.isEmpty())
         return; // Content is entirely outside the frame; nothing to draw.
@@ -228,6 +238,7 @@ void render_motion_blur(const QImage &sourceImage,
     ctx.samples = samples;
     ctx.src_width = src_width;
     ctx.src_height = src_height;
+    ctx.pivot = pivot;
     ctx.subX0 = clipped.left();
     ctx.subY0 = clipped.top();
     ctx.subWidth = clipped.width();
@@ -243,11 +254,12 @@ void render_transform_only(const QImage &sourceImage,
                            QImage &destImage,
                            const TransformState &current,
                            int src_width,
-                           int src_height)
+                           int src_height,
+                           QPointF pivot)
 {
     QPainter painter(&destImage);
     painter.setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
-    painter.setTransform(build_transform(current, src_width, src_height));
+    painter.setTransform(build_transform(current, src_width, src_height, QPointF(0, 0), pivot));
     painter.drawImage(0, 0, sourceImage);
     painter.end();
 }
@@ -344,6 +356,16 @@ static int filter_get_image(mlt_frame frame,
                       > 1e-3;
     bool do_blur = frac > 0.0001 && samples > 1 && has_motion;
 
+    // Rotation pivot, normalized within the rect: (0.5, 0.5) = center
+    // (previous, still-default behavior), (0, 0) = top-left corner, etc.
+    double pivot_x = mlt_properties_exists(properties, "pivot_x")
+                          ? mlt_properties_get_double(properties, "pivot_x")
+                          : 0.5;
+    double pivot_y = mlt_properties_exists(properties, "pivot_y")
+                          ? mlt_properties_get_double(properties, "pivot_y")
+                          : 0.5;
+    QPointF pivot(pivot_x, pivot_y);
+
     *format = choose_image_format(*format);
     uint8_t *src_image = NULL;
     int b_width = 0, b_height = 0;
@@ -365,7 +387,7 @@ static int filter_get_image(mlt_frame frame,
 
     if (!do_blur || *format != mlt_image_rgba) {
         // No blur requested or unsupported format
-        render_transform_only(sourceImage, destImage, current, b_width, b_height);
+        render_transform_only(sourceImage, destImage, current, b_width, b_height, pivot);
     } else {
         render_motion_blur(sourceImage,
                            dest_image,
@@ -376,7 +398,8 @@ static int filter_get_image(mlt_frame frame,
                            frac,
                            samples,
                            b_width,
-                           b_height);
+                           b_height,
+                           pivot);
     }
 
     convert_qimage_to_mlt(&destImage, dest_image, *width, *height);

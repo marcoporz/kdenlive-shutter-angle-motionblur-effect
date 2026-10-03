@@ -12,8 +12,14 @@ This repository simply:
 - Extracts that one filter into a small, standalone MLT module (`libmltshutterblur.so`)
   so it can be built and installed without recompiling all of MLT, while the PR
   is still in review.
-- Ships it with a default of a **fixed 180° shutter angle**, no user-exposed
-  shutter/sample controls, to keep the Kdenlive effect simple.
+- Exposes the filter's **Shutter Angle** (default 180°, 0 = off) and
+  **Blur Quality** (sample count) parameters as sliders in the Kdenlive
+  effect UI.
+- Adds a **rotation pivot** (`pivot_x`/`pivot_y`) on top of the upstream
+  filter, so rotation can spin around a corner or edge instead of always
+  the rectangle's center. This part is NOT in the original PR #1301 — it's
+  a local addition on top of RocketJannis's code, kept in the same file for
+  simplicity.
 - Adds a Kdenlive effect XML (`kdenlive/shutterblur.xml`) so it shows up in
   Kdenlive's effect list, modeled on Kdenlive's own `qtblend.xml`.
 - Adds a build/install script and this documentation.
